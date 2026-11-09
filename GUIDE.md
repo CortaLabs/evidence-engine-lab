@@ -3,23 +3,23 @@
 
 By Austin / NoSuchAgency · CortaLabs · An original INVICTUS contribution
 
-An agent's transcript already records useful evidence: which command ran, what came back, and why a later claim might be wrong. The challenge is finding the right records while you are still working.
+You are reviewing a change when the coding agent says the tests passed. Its long transcript includes a test command that exited with code 1, an older report saying `42 passed`, and another test command with no recorded result yet. Before accepting the handoff, you need to know which record supports the claim.
 
-This guide turns that history into a small tool you can own: an explicit source registry, two narrow transcript adapters, a local SQLite index, and a reader that can search a claim, expand its context, and pair a tool call with its recorded result. The first exercise ends with a referenced finding about a failed test, an old passing report, and an unfinished command. Those distinctions matter when a worker resumes after a context reset, a reviewer checks a claimed test run, or a coordinator separates a recorded blocker from a persuasive retelling.
+This guide walks you through building the reader that answers that question: search indexed transcript events from a local command line, open a matching event's context, and follow its preserved reference to the recorded call and result. In the example, that lets you see that the `42 passed` text came from reading an older report, while the current test invocation failed and the other command is still pending. You can hand the next worker those references and a focused question instead of the whole transcript. The tool uses a local SQLite database; an optional MCP adapter gives an agent the same read operations while it works.
 
 This guide draws on our work on AI Trace at CortaLabs, the larger system that informed it. INVICTUS is the group affiliation under which I am contributing the article. The companion, **Evidence Engine Lab**, is a separate educational implementation. You do not need AI Trace, our coordinator, or our project journal to build it.
 
 For me, this is personal software in practice: use an AI to build around a recurring problem in your work, then keep the parts that help. Inspect the reference, adapt it, or replace it with your own implementation. The point is to investigate your history without depending on somebody else's summary.
 
-**Companion status:** unmaintained educational reference / tested snapshot. Users own their forks. Download [evidence-engine-lab.zip](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.1/evidence-engine-lab.zip). The public build specification ships as `BUILD_CONTRACT.md` and is also available at [BUILD_CONTRACT.md](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.1/BUILD_CONTRACT.md). The companion is MIT licensed. Read `VERIFICATION.md` for the tested environment and compatibility limits.
+**Companion status:** unmaintained educational reference / tested snapshot. Users own their forks. Download [evidence-engine-lab.zip](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.2/evidence-engine-lab.zip). The public build specification ships as `BUILD_CONTRACT.md` and is also available at [BUILD_CONTRACT.md](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.2/BUILD_CONTRACT.md). The companion is MIT licensed. Read `VERIFICATION.md` for the tested environment and compatibility limits.
 
 ## How to use this guide
 
 If you are comfortable with Python, implement the stages directly. With a coding agent, give it this article and the public build contract, approve a small fixture directory, and work through one stage at a time. Read the checks before moving on. The reference is optional: the contract and fixtures define the behavior independently.
 
-You can give your agent the [GitHub guide](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.1/GUIDE.md), paste all three posts, or let it read the discussion through [HF MCP](https://github.com/CortaLabs/hf_mcp). HF MCP connects an agent to HF under your account; its default `reader` profile excludes live-write tools. Follow its setup and authentication instructions, then supply this thread's ID. Ask for `posts_read` with post bodies and Markdown output, following pagination until all three tutorial parts are present. `threads_read` can identify the thread, but its first-post body alone is not the complete guide. Report a failed or partial read instead of filling gaps from guesses.
+You can give your agent the [GitHub guide](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.2/GUIDE.md), paste all three posts, or let it read the discussion through [HF MCP](https://github.com/CortaLabs/hf_mcp). HF MCP connects an agent to HF under your account; its default `reader` profile excludes live-write tools. Follow its setup and authentication instructions, then supply this thread's ID. Ask for `posts_read` with post bodies and Markdown output, following pagination until all three tutorial parts are present. `threads_read` can identify the thread, but its first-post body alone is not the complete guide. Report a failed or partial read instead of filling gaps from guesses.
 
-For a build without reference-code access, use [the guide-and-fixtures archive](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.1/evidence-engine-build-inputs.zip). It contains `GUIDE.md`, `BUILD_CONTRACT.md`, the approved synthetic fixtures, and a sanitized Codex CLI capture, but not the finished implementation. The full companion download lets you run or compare the reference. Both archives support the same exercise; neither requires a private CortaLabs tool.
+For a build without reference-code access, use [the guide-and-fixtures archive](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.2/evidence-engine-build-inputs.zip). It contains `GUIDE.md`, `BUILD_CONTRACT.md`, the approved synthetic fixtures, and a sanitized Codex CLI capture, but not the finished implementation. The full companion download lets you run or compare the reference. Both archives support the same exercise; neither requires a private CortaLabs tool.
 
 Use this as the reusable assignment, then give the agent only one bounded stage prompt at a time:
 
@@ -37,17 +37,11 @@ Sections 1–8 build and investigate the lab. Sections 9–11 and 13 cover possi
 
 ## 1. Replace a convincing summary with an inspectable record
 
-An agent says the tests passed. Another agent is about to review its work. The session is enormous, some context has been compacted, and the important command output is buried somewhere neither of them wants to read from the beginning.
-
-You ask for clarification. The first agent produces a convincing summary.
-
-That has not answered the question.
-
-You need the command, its result, the checkout it ran against (if recorded), and enough surrounding context to understand the sequence. **A summary can explain those observations. It cannot replace evidence that was never recorded.**
+The reader can show which command and result the approved source recorded, along with enough context to interpret their sequence. It cannot authenticate the harness, prove the source is complete, or decide whether the code is correct. **A summary can explain recorded observations; it cannot replace evidence that was never recorded.**
 
 The starting mechanism is straightforward: parse the logs the harness already writes, put their useful structure into a searchable store, and give humans and agents a small interface for retrieving it.
 
-That produces more than an archive for investigating yesterday's failures. A worker can find an earlier diagnosis while debugging. A coordinator can inspect a teammate's reported blocker. A replacement agent can retrieve the evidence behind a handoff without inheriting the entire conversation.
+A worker can find an earlier diagnosis while debugging. A coordinator can inspect a teammate's reported blocker. A replacement agent can retrieve the evidence behind a handoff without importing the entire conversation.
 
 We will build one connected path: a source record becomes a normalized event, the event becomes searchable, a result leads back to its context, and an agent uses that context to investigate a claim. Then we will examine the failures that appear when you expand the system.
 
