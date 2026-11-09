@@ -3,37 +3,37 @@
 
 By Austin / NoSuchAgency · CortaLabs · An original INVICTUS contribution
 
-An agent's transcript already contains answers to useful questions: which command ran, what came back, and why a later claim might be wrong. The difficulty is retrieving the right few records while you are working.
+An agent's transcript already records useful evidence: which command ran, what came back, and why a later claim might be wrong. The challenge is finding the right records while you are still working.
 
-This guide turns that history into a small tool you can own. You will build an explicit source registry, two narrow transcript adapters, a local SQLite index, and a reader that can search a claim, expand its context, and pair a tool call with its recorded result. The first exercise ends with a referenced finding about a failed test, an old passing report, and an unfinished command. That difference matters when a worker is resumed after a context reset, when a reviewer needs to check a claimed test run, or when a coordinator has to tell an actual blocker from a persuasive retelling.
+This guide turns that history into a small tool you can own: an explicit source registry, two narrow transcript adapters, a local SQLite index, and a reader that can search a claim, expand its context, and pair a tool call with its recorded result. The first exercise ends with a referenced finding about a failed test, an old passing report, and an unfinished command. Those distinctions matter when a worker resumes after a context reset, a reviewer checks a claimed test run, or a coordinator separates a recorded blocker from a persuasive retelling.
 
-The ideas come from our work on AI Trace at CortaLabs. AI Trace is the larger system that informed this article. INVICTUS is the group affiliation under which I am contributing it. The companion is a separate educational implementation called **Evidence Engine Lab**. You do not need AI Trace, our coordinator, or our project journal to build it.
+This guide draws on our work on AI Trace at CortaLabs, the larger system that informed it. INVICTUS is the group affiliation under which I am contributing the article. The companion, **Evidence Engine Lab**, is a separate educational implementation. You do not need AI Trace, our coordinator, or our project journal to build it.
 
-For me, this is a practical example of personal software: use your AI to build a tool around a recurring problem in your own work, then keep the parts that help. You can inspect the reference, adapt it, or replace it with your own implementation. The useful outcome is being able to investigate your history without depending on somebody else's summary.
+For me, this is personal software in practice: use an AI to build around a recurring problem in your work, then keep the parts that help. Inspect the reference, adapt it, or replace it with your own implementation. The point is to investigate your history without depending on somebody else's summary.
 
-**Companion status:** unmaintained educational reference / tested snapshot. Users own their forks. The download location is [evidence-engine-lab.zip](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.0/evidence-engine-lab.zip). The public build specification ships as `BUILD_CONTRACT.md` and is also available at [BUILD_CONTRACT.md](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.0/BUILD_CONTRACT.md). The companion is MIT licensed. Read `VERIFICATION.md` for the tested environment and compatibility limits.
+**Companion status:** unmaintained educational reference / tested snapshot. Users own their forks. Download [evidence-engine-lab.zip](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.1/evidence-engine-lab.zip). The public build specification ships as `BUILD_CONTRACT.md` and is also available at [BUILD_CONTRACT.md](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.1/BUILD_CONTRACT.md). The companion is MIT licensed. Read `VERIFICATION.md` for the tested environment and compatibility limits.
 
 ## How to use this guide
 
-Readers comfortable with Python can implement the stages directly. With a coding agent, give it this article and the public build contract, approve a small fixture directory, and have it implement one stage at a time. Read its checks before continuing. The reference is optional for construction; the contract and fixtures define the behavior independently.
+If you are comfortable with Python, implement the stages directly. With a coding agent, give it this article and the public build contract, approve a small fixture directory, and work through one stage at a time. Read the checks before moving on. The reference is optional: the contract and fixtures define the behavior independently.
 
-You can give your agent the [GitHub guide](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.0/GUIDE.md), paste all three posts, or let it read the discussion through [HF MCP](https://github.com/CortaLabs/hf_mcp). HF MCP connects an agent to HF under your account; its default `reader` profile excludes live-write tools. Follow its setup and authentication instructions, then supply this thread's ID. Ask for `posts_read` with post bodies and Markdown output, following pagination until all three tutorial parts have been read. `threads_read` can identify the thread, but its first-post body alone is not this complete guide. A failed or partial read must be reported, not filled in from guesses.
+You can give your agent the [GitHub guide](https://github.com/CortaLabs/evidence-engine-lab/blob/v0.1.1/GUIDE.md), paste all three posts, or let it read the discussion through [HF MCP](https://github.com/CortaLabs/hf_mcp). HF MCP connects an agent to HF under your account; its default `reader` profile excludes live-write tools. Follow its setup and authentication instructions, then supply this thread's ID. Ask for `posts_read` with post bodies and Markdown output, following pagination until all three tutorial parts are present. `threads_read` can identify the thread, but its first-post body alone is not the complete guide. Report a failed or partial read instead of filling gaps from guesses.
 
-For a build without reference-code access, use [the guide-and-fixtures archive](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.0/evidence-engine-build-inputs.zip). It contains `GUIDE.md`, `BUILD_CONTRACT.md` and approved fixtures, without the finished implementation. The full companion download is for running or comparing the reference. These are two ways to work through the same exercise; neither requires a private CortaLabs tool.
+For a build without reference-code access, use [the guide-and-fixtures archive](https://github.com/CortaLabs/evidence-engine-lab/releases/download/v0.1.1/evidence-engine-build-inputs.zip). It contains `GUIDE.md`, `BUILD_CONTRACT.md`, the approved synthetic fixtures, and a sanitized Codex CLI capture, but not the finished implementation. The full companion download lets you run or compare the reference. Both archives support the same exercise; neither requires a private CortaLabs tool.
 
 Use this as the reusable assignment, then give the agent only one bounded stage prompt at a time:
 
-> Build a local evidence reader from this article, `BUILD_CONTRACT.md` revision 3.2, and the approved synthetic fixtures. First inspect the repository and report the files, dependencies, and existing interfaces you plan to reuse. Do not read the finished reference, private archives, credentials, or unrelated transcripts. Keep every source path explicit and approved; retain raw bytes locally and never scan a home directory.
+> Build a local evidence reader from this article, `BUILD_CONTRACT.md` revision 3.2, and the approved fixtures: synthetic examples plus the sanitized Codex CLI 0.167.0 capture. First inspect the repository and report the files, dependencies, and existing interfaces you plan to reuse. Do not read the finished reference, private archives, credentials, or unrelated transcripts. Keep every source path explicit and approved; retain raw bytes locally and never scan a home directory.
 >
 > Work in the assigned directory. Preserve source identity and call/result relationships. Implement the contract's bounded ingestion, atomic checkpointing, schemas, CLI, and read-only operations. Do not infer authentication, ownership, successful tests, or completeness from message role, wording, similarity, or an absent result. Keep unknown, malformed, pending, ambiguous, stale, truncated, and unavailable states visible.
 >
 > For each stage, name its inputs, output files/interfaces, dependencies on earlier stages, and the contract clauses it covers. Add hermetic tests with temporary files/databases before or alongside code. Run the stage tests and direct neighbors; show exact commands, exit statuses, and relevant counts. Before completion, demonstrate the synthetic end-to-end path, re-ingestion without duplicates, an append, and the deliberately failing negative controls. Report what the evidence proves, what it does not prove, and any unsupported formats. Stop and name a missing contract rule instead of filling it with a guess.
 
-Useful bounded sequence: first inventory the approved inputs and discover transcript shapes, producing a format note and sanitized fixtures; next implement the adapter and test recognized, unknown, malformed and conflicting-identity records; then build store initialization and atomic incremental ingestion, proving checkpoints, FTS and rows agree; then add scoped search, event/context/activity reads and the CLI, testing pagination and failure states; finally, if requested, add the optional MCP adapter over the same Reader and prove a real four-tool client/server exchange. Each stage depends on the preceding artifact, names its changed files before work, and ends with its own test receipt and a handoff naming unresolved limits. Live harness installation is a separate final check, not implied by a wire test.
+Work through the build in bounded steps. First inventory the approved inputs and discover transcript shapes; produce a format note and sanitized fixtures. Next implement the adapter and test recognized, unknown, malformed, and conflicting-identity records. Then build store initialization and atomic incremental ingestion, checking that checkpoints, FTS, and rows agree. Add scoped search, event/context/activity reads, and the CLI, with pagination and failure-state tests. If requested, add the optional MCP adapter over the same Reader and verify a real four-tool client/server exchange. Name changed files and dependencies for every stage; end with a test receipt and a handoff that lists unresolved limits. Installing it in a live harness is a separate check; a wire test does not establish that.
 
 The core requires Python 3.11+, SQLite with FTS5, a terminal and permission to create a local database. It needs no model calls, account, network service, vector database or paid infrastructure. Building it with an AI uses your existing coding-agent allowance. The optional MCP transport adds a separately pinned SDK dependency.
 
-The first eight sections build and investigate the lab. Sections 9–11 and 13 explain possible integrations and later extensions. Section 12 gives the verification work that must pass before relying on the core. A short contents list: run the lab; inspect the harness; normalize events; store atomically; collect incrementally; investigate a claim; connect a reader; test failures deliberately.
+Sections 1–8 build and investigate the lab. Sections 9–11 and 13 cover possible integrations and later extensions; section 12 gathers the verification work to complete before relying on the core. In order: run the lab, inspect the harness, normalize events, store atomically, collect incrementally, investigate a claim, connect a reader, and test failures deliberately.
 
 ## 1. Replace a convincing summary with an inspectable record
 
@@ -43,7 +43,7 @@ You ask for clarification. The first agent produces a convincing summary.
 
 That has not answered the question.
 
-You need the command, its result, the checkout it ran against where that was recorded, and enough surrounding context to understand the sequence. A summary can explain those observations. It cannot replace observations that are missing.
+You need the command, its result, the checkout it ran against (if recorded), and enough surrounding context to understand the sequence. **A summary can explain those observations. It cannot replace evidence that was never recorded.**
 
 The starting mechanism is straightforward: parse the logs the harness already writes, put their useful structure into a searchable store, and give humans and agents a small interface for retrieving it.
 
@@ -56,17 +56,17 @@ The collection and retrieval path does not need a model call. A model becomes us
 
 ### What you can do with your own record
 
-A useful first question is “Have we seen this error before?” Search the exact failure, read the earlier command and result, and check whether its environment matches today's problem. An agent can use that evidence to avoid repeating a failed repair. After a context reset, the same reader can recover the decision and its supporting action without importing an entire conversation.
+A useful first question is “Have we seen this error before?” Search for the failure, open the earlier command and result, and check whether the environment matches today's problem. An agent can use that record to avoid repeating a failed repair. After a context reset, the reader can recover the decision and its supporting action without importing the whole conversation.
 
 You can also compare workflows. If you change an agent prompt or a tool adapter, keep a fixed set of tasks and inspect which calls ran, which failed and which outcomes a reviewer accepted. That gives you evaluation material grounded in work you can inspect. Counting confident completion messages would measure something else.
 
-Model training is a possible later use of a curated export. For example, a reviewed “investigate this failed run” input could be paired with a good finding that cites its command/result evidence. Keep its source references, the extractor version, the label's meaning and who reviewed it. Preserve failed and ambiguous cases for evaluation rather than teaching the model that every confident answer is correct. Separate sessions or tasks between training and evaluation so neighboring excerpts cannot leak the answer. Remove secrets, obtain permission for other people's material, and check the target model's training format before exporting anything.
+Model training is a possible later use for a curated export. A reviewed “investigate this failed run” input, for example, could be paired with a finding that cites the command and result. Keep the source references, extractor version, label definition, and reviewer. Hold failed and ambiguous cases out for evaluation; otherwise the model may learn that every confident answer is correct. Split by session or task so nearby excerpts cannot leak the answer. Remove secrets, get permission for other people's material, and check the target model's format before exporting.
 
-The core here provides traceable records. Selecting examples, reviewing labels and measuring whether a trained model improves are separate work. You can get immediate value from retrieval and debugging before taking on that work.
+The core provides traceable records. Selecting examples, reviewing labels, and measuring whether a trained model improves are separate work. Retrieval and debugging can be useful before you take them on.
 
 ## 2. Run the small version, or build against the same contract
 
-The downloadable folder is `evidence-engine-lab`. It contains the `evidence_engine` package, public synthetic fixtures, a sanitized Codex native excerpt, tests, and setup notes. It implements this article's public build contract. Run its checks yourself; a historical receipt cannot establish your local build. `VERIFICATION.md` identifies the reviewed snapshot and its precise compatibility limits.
+The downloadable folder is `evidence-engine-lab`. It contains the `evidence_engine` package, public synthetic fixtures, a sanitized Codex CLI capture, tests, and setup notes. It implements this article's public build contract. Run its checks yourself; a historical receipt does not establish your local build. `VERIFICATION.md` identifies the reviewed snapshot and its compatibility limits.
 
 Keep raw transcripts private. Start with the supplied synthetic fixture; do not point the collector at your entire session history. The collector only opens the absolute file you configure. It does not discover sessions in your home directory.
 
@@ -119,7 +119,7 @@ python -m evidence_engine --config evidence.json context 'RETURNED_REF'
 
 Context must keep the claim under `anchor` and return ordered neighboring events separately. If search is empty, check the configured source key/path, inspect coverage and pending bytes, and confirm ingestion exited successfully. If a reference is unknown, copy it from the same database and scope; do not guess one from a row number. See section 7 for the investigation itself.
 
-The core files have specific jobs. `adapters.py` turns approved records into events; `store.py` retains bytes and commits batches; `reader.py` owns search, context and interpretation; `__main__.py` exposes those operations. `mcp_server.py` is an optional transport over the same reader. No transport gets its own independent query implementation.
+Each core file has one job: `adapters.py` turns approved records into events; `store.py` retains bytes and commits batches; `reader.py` handles search, context, and interpretation; `__main__.py` exposes those operations. `mcp_server.py` is an optional transport over the same reader, not a second query implementation.
 
 ### The observable core, before implementation
 
@@ -131,11 +131,11 @@ The public Python constructors are `Store(database, source, adapter=None)` and `
 
 The complete serialized fields and continuation rules are in the public build contract, revision 3.2. Implement that document alongside the stages below. It fixes the JSON envelopes for event, context and activity as well as search; a builder should not have to guess where a client will find a call reference or an interpretation.
 
-The initial limits are deliberately small: a 64 MiB source, 256 KiB complete record, and a default batch of 500 records or 1 MiB. A search returns at most 100 rows with 512-character previews; event expansion provides slices up to 4,096 characters. Responses are capped at 64 KiB of UTF-8 JSON. These limits protect a local exercise; they do not establish production-scale performance or a hard execution deadline.
+The limits keep this exercise small: a 64 MiB source, a 256 KiB complete record, and a default batch of 500 records or 1 MiB. Search returns at most 100 rows with 512-character previews; event expansion provides slices up to 4,096 characters. UTF-8 JSON responses are capped at 64 KiB. These bounds suit a local exercise; they do not establish production-scale performance or a hard execution deadline.
 
 ### Assignment: build the first slice
 
-> Approved inputs: this article, BUILD_CONTRACT.md revision 3.2 and the public fixtures. Work only in the directory I approve. Do not read the finished reference implementation, private AI Trace, credentials or unrelated transcripts.
+> Approved inputs: this article, BUILD_CONTRACT.md revision 3.2, the synthetic fixtures, and the sanitized Codex CLI 0.167.0 capture. Work only in the directory I approve. Do not read the finished reference implementation, private AI Trace, credentials or unrelated transcripts.
 >
 > Produce the evidence_engine package with Store and Reader constructors, the JSON configuration and module CLI defined above. Implement the normalized schema, source identity checks, raw retention, atomic incremental collection and bounded reads in the contract. Keep all operational state local.
 >
@@ -341,9 +341,9 @@ The tests exercise an injected exception, an abrupt process exit before commit, 
 
 A harness may pause halfway through writing a JSONL record. A collector that reads at that moment sees an incomplete line. That is not necessarily corruption.
 
-Use byte offsets, read in binary mode, and advance only past complete record boundaries. A character count is not a byte checkpoint when the content contains multibyte characters.
+Use byte offsets and binary reads; advance only past complete record boundaries. With multibyte text, a character count is not a byte checkpoint.
 
-This illustrative batch-planning loop shows the complete-line rule; it is not a runnable standalone implementation. Your implementation must also stop before exceeding its byte budget:
+This illustrative batch-planning loop shows the complete-line rule; it is not a standalone implementation. It checks the prospective size before parsing or adding a line, so a line that does not fit remains pending:
 
 ```python
 for _ in range(max_records):
@@ -352,18 +352,20 @@ for _ in range(max_records):
         raise ValueError("record exceeds 256 KiB; batch not committed")
     if not raw or not raw.endswith(b"\n"):
         break
+    if end - offset + len(raw) > MAX_BATCH:
+        if not batch:
+            raise ValueError("invalid limit: max_bytes cannot fit a complete record")
+        break
     normalized = adapter.parse_line(raw, source_key=source_key, line_no=line_no + 1)
     line_no += 1
     batch.append((end, end + len(raw), line_no, raw, normalized))
     end += len(raw)
     digest.update(raw)
-    if end - offset >= MAX_BATCH:
-        break
 ```
 
-The surrounding function takes a file-size observation, verifies the previously consumed prefix, and plans a bounded batch outside the database transaction. The final incomplete line is left pending. This policy also defers a final JSON object that is syntactically complete but has no terminating newline.
+The surrounding function records the observed file size, verifies the consumed prefix, and plans a bounded batch outside the database transaction. An incomplete final line stays pending. So does a valid JSON object without its terminating newline.
 
-A complete malformed line is different. It becomes a diagnostic event and the collector can continue to the next record. An oversized line is different again: this teaching implementation rejects a record above 256 KiB without committing the batch. It does not claim to have collected the rest of that source.
+A complete malformed line becomes a diagnostic event, and collection can continue with the next record. An oversized line follows a different rule: this teaching implementation rejects any record above 256 KiB without committing the batch. It does not claim to have collected the rest of the source.
 
 Large-output handling is a separate extension. A production collector can stream an oversized record into an artifact store, compute its digest without holding all of it in memory, and index a disclosed preview. The important property is that an output limit does not silently turn missing text into apparently complete evidence.
 
@@ -416,7 +418,7 @@ python -m evidence_engine --config evidence.json context "RETURNED_REF"
 
 `RETURNED_REF` is a placeholder; use the actual returned reference. The response keeps the requested event under `anchor`, with nearby events separately identified.
 
-The preceding records contain the totals test command, an exit code of 1, and a summary reporting one failed test. The assistant's later completion claim disagrees with that recorded invocation.
+The records around this claim include a totals-test command, exit code 1, and a summary reporting one failed test. The assistant's later completion claim conflicts with that invocation.
 
 Now run:
 
@@ -424,16 +426,16 @@ Now run:
 python -m evidence_engine --config evidence.json activity
 ```
 
-The companion produces these interpretations from the synthetic fixture:
+The companion derives these interpretations from the synthetic fixture:
 
 - Recorded operation: Read `old-report.txt`; Process state: Exited; Exit code: 0; Test interpretation: Unknown; a file read is not a new test run
 - Recorded operation: Run `tests/test_totals.py`; Process state: Exited; Exit code: 1; Test interpretation: Reported failure
 - Recorded operation: Run `tests/test_slow.py`; Process state: Pending; Exit code: Not recorded; Test interpretation: Unknown
 
 
-The fixture's old report contains `42 passed`. That is not a new passing invocation. The pending command has no terminal result, so it is not a pass either.
+The fixture's old report contains `42 passed`, but it was read from a file rather than produced by a new test run. The other command is pending because no terminal result was recorded. Neither is a passing invocation.
 
-The result does not establish that the code is wrong in every environment. It establishes that this recorded invocation reported a failure and that the available evidence does not support the displayed completion claim.
+This does not establish that the code is wrong in every environment. It establishes that this recorded invocation reported a failure and that the available evidence does not support the displayed completion claim.
 
 ### Pair calls by their recorded identifiers
 
@@ -465,7 +467,7 @@ The full function also confirms the tool type, parses the recorded command, and 
 
 For this lab, a passing verdict needs a recognized direct pytest invocation, terminal exit code 0, and a supported final summary containing a positive passing count without failures or errors. Collection-only commands, shell pipelines, truncated output and unfamiliar summaries remain unknown. Contradictory exit and summary signals are reported as a conflict.
 
-That is still a reported verdict, not independent authentication of the test runner or its output. Extend the classifier using observed formats and fixtures. Do not promote unrecognized output to success merely to make the report look complete.
+That is still a *reported verdict*, not independent authentication of the test runner or its output. Extend the classifier using observed formats and fixtures. Do not promote unrecognized output to success merely to make the report look complete.
 
 The distinction becomes especially important with asynchronous tools. A wrapper can finish while the child process it started is still running. A later poll can provide output without proving termination. The larger system had to track wrapper status, child-process status and semantic outcome separately, and attach polling output to its original invocation.
 
@@ -486,7 +488,7 @@ The next worker now has a precise place to begin instead of another long convers
 <!-- HF_POST:3 -->
 ## 8. Let agents query the history while they work
 
-The same read operations can serve a CLI, an API or MCP. Keep the storage and interpretation in one reusable implementation so the transports cannot quietly disagree.
+The same read operations can serve a CLI, an API, or MCP. Keep storage and interpretation in one implementation so the transports cannot quietly disagree.
 
 The Python interface runs against the database created earlier:
 
@@ -507,7 +509,7 @@ The CLI's `sources` command is an owner-operated discovery operation. In a coord
 
 ### Keep search, freshness, and output limits explicit
 
-The companion quotes the input as an FTS token phrase and binds it as a SQL parameter. SQL parameterization and FTS-language quoting solve different problems. The result is literal token-phrase behavior, not unrestricted FTS syntax and not exact byte-substring matching. Punctuation-heavy identifiers may need a separate scoped exact-text operation.
+The companion quotes input as an FTS token phrase and binds it as a SQL parameter. Those steps solve different problems: parameterization keeps data out of SQL syntax, while FTS quoting limits the query language. The result is literal token-phrase behavior, not unrestricted FTS syntax or exact byte-substring matching. Punctuation-heavy identifiers may need a separate, scoped exact-text operation.
 
 Search returns events in ingestion order. Its first page captures a high event ID; later pages keep that ceiling and continue after the last ID returned. Appends cannot insert new results into that listing. Follow `next_page` unchanged.
 
@@ -515,15 +517,15 @@ This relies on the teaching store's append-only policy. Deletion, reparsing or m
 
 Each response also names its source scope and reports parser coverage. Unknown or diagnostic counts reveal gaps even when a search returns no matching rows.
 
-Freshness reports compare current source metadata with the last ingest observation. If an agent searches before a new error has been indexed, it may receive no matches while `pending_bytes` is positive. The answer means “no match in the indexed history,” not “this error never happened.”
+Freshness reports compare current source metadata with the last ingest observation. If an agent searches before a new error has been indexed, it may get no matches while `pending_bytes` is positive. That means **no match in the indexed history**; it does not mean the error never happened.
 
-Metadata is a cheap freshness clue, not a full integrity check. The response names the check as `metadata_only`. When current evidence matters, run the collector for the known source and query again. At scale, route targeted refreshes through the ingestion owner rather than making every reader rediscover the whole corpus.
+Metadata is a cheap freshness clue, not an integrity check. The response names it `metadata_only`. When current evidence matters, have the owner ingest the known source, then query again. At scale, route targeted refreshes through that owner instead of making every reader rediscover the corpus.
 
 Search previews are limited to 512 characters, with event expansion up to 4,096 characters. The lab does not promise automatic secret removal; use only approved sanitized sources. `text_is_partial` and `next_text_offset` tell the caller how to expand them. Text offsets address normalized event characters, not raw byte offsets. A future redacted view needs separately defined offsets. Search previews are prefixes, not necessarily excerpts centered on the match; expand the event when the relevant phrase lies later.
 
 The context anchor has its own field. A response-budget bug in the larger system illustrated why this matters: shortening a window can discard the very event the caller requested. Protect the anchor's identity, disclose shortened text, and drop distant context before sacrificing the evidence reference. If even a minimal valid answer cannot fit, return an explicit error.
 
-The companion caps rows and serialized output bytes. A cooperative SQL deadline can be added as a separate optimization; it is not part of this core contract. It does not claim a hard wall-clock bound over all filesystem and Python work. Enforceable process-level deadlines are an additional operational feature.
+The companion caps rows and serialized output bytes. A cooperative SQL deadline could be added, but it is outside this core contract. The current limits do not bound all filesystem and Python work by wall-clock time; process-level deadlines are a separate operational feature.
 
 ### Optional MCP adapter
 
@@ -598,11 +600,11 @@ The result should be less repeated investigation, not another ritual before ever
 
 ## 9. Later extension: connect evidence to your existing workflow
 
-A transcript store supplies observations. A project journal preserves deliberate decisions and their rationale. A task tracker owns current task state. A coordinator decides what to delegate or escalate under its own rules.
+A transcript store supplies observations. A project journal preserves decisions and their rationale. A task tracker owns current task state; a coordinator decides what to delegate or escalate under its own rules.
 
-These systems can share references without merging into one enormous application.
+They can share references without becoming one enormous application.
 
-Suppose a worker reports that a command was denied. The coordinator retrieves activity around that point and reads the actual result. It may discover a missing session binding, an intentional restriction, or an unrelated execution failure. Those require different next actions. The evidence store does not grant permission to retry or change policy; it makes the situation inspectable.
+Suppose a worker reports that a command was denied. The coordinator retrieves the surrounding activity and reads the result. It might find a missing session binding, an intentional restriction, or an unrelated execution failure. Each calls for a different response. The evidence store makes the situation inspectable; it does not authorize a retry or policy change.
 
 A project record can then preserve the finding, decision, rationale and evidence references. This is a template, not an actual record:
 
@@ -675,7 +677,7 @@ The hard part is deciding what is local.
 
 Persisting final ownership or verdicts too early creates a second decision engine with difficult invalidation rules. A better starting pattern is to project stable inputs, then combine them with relationships at a defined read boundary. Reuse the same interpretation functions for direct and projected reads.
 
-The repository's attribution design explicitly separates event-local extraction from graph-dependent decisions. That is the transferable principle; it does not mean every planned optimization or consumer integration is already complete.
+In our AI Trace design, event-local extraction stays separate from graph-dependent decisions. That is the transferable principle; it does not mean every planned optimization or consumer integration is already complete.
 
 Test an optimized read against a simpler reference implementation using awkward fixtures: two tasks sharing a session, a result arriving in another batch, a poll without its opener, deleted evidence, and an extractor-version change. Compare evidence membership and unresolved states, not only the final status label.
 
@@ -687,13 +689,13 @@ Add this machinery when measurements show repeated extraction is expensive. It i
 
 ## 12. Have the verifier try to break the implementation
 
-A parser and its tests can agree perfectly while sharing the same mistaken assumption. This happens easily when one agent writes both from a vague description.
+A parser and its tests can agree while sharing the same mistaken assumption, especially when one agent writes both from a vague description.
 
 Inspect raw fixtures independently. Define expected outcomes from those records, not by calling the parser under test. Deliberately break a few guarantees and confirm that the tests detect the damage.
 
 The verification suite must cover the connected exercise, including incremental appends, multibyte partial records, malformed and unknown input, source moves and deletion, source rewrites, duplicate identities, cross-source pairing rejection, unfinished commands, stale reads, text expansion, context-anchor preservation, read-only connections, search pagination during appends and backup restoration. If you add redaction or mutable event updates, test those separate features too; they are not hidden prerequisites for this core.
 
-Negative controls do something more specific. In temporary copies they publish before the checkpoint, consume an incomplete tail, or classify reading an old report as executing a passing test. Each corresponding assertion must fail. Run the unmodified suite separately and retain both results.
+Negative controls test whether the suite catches specific breakage. In temporary copies, publish before the checkpoint, consume an incomplete tail, or classify reading an old report as a passing test run. The corresponding assertion should fail each time. Then run the unmodified suite separately and retain both results.
 
 These checks concern the small companion implementation. They do not establish compatibility with your live harness or claim that our private production test suite was executed for this article.
 
@@ -725,7 +727,7 @@ Retrieved content is untrusted input. An old tool result may contain instruction
 
 ## 13. Choose the next capability by the question you need answered
 
-Once the basic history works, the useful extensions become clearer. Keep them tied to questions your team actually asks; an archive is useful when it shortens a real investigation, not because it can be made larger.
+Once the basic history works, choose extensions by the questions your team actually asks. An archive earns its place when it shortens a real investigation, not simply because it can grow.
 
 For a handoff, combine current task state with decisions and a few cited execution records. This is achievable without semantic search or a continuous summarization service. The next worker can expand the evidence it actually needs.
 
@@ -743,7 +745,7 @@ For evaluation or training exports, use the reviewed-example approach in part 1.
 
 Semantic retrieval can eventually help with questions that do not share exact wording with an earlier incident. Preserve source references and exact lookup alongside it. Similarity can find a related diagnosis; it should not determine which result belongs to a tool call.
 
-These capabilities can support research into how tools, instructions, context handling and coordination affect observable agent behavior. That still requires repeatable tasks, consistent instrumentation, meaningful definitions and care about causation. An archive provides material for experiments; it does not perform those experiments merely by existing.
+These capabilities can support research into how tools, instructions, context handling, and coordination affect observable agent behavior. That research still needs repeatable tasks, consistent instrumentation, meaningful definitions, and care about causation. An archive gives you material to study; it does not run the experiments for you.
 
 Start with one completed task. Have a different agent retrieve the decisive command and result, explain what they establish, identify missing context, and write a concise finding with resolvable references.
 
