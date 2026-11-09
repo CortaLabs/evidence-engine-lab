@@ -1,0 +1,17 @@
+# Tested snapshot
+
+Prepared on Linux on 2026-11-09. Core: Python 3.11.13, SQLite 3.50.2 with FTS5. Optional transport: official MCP Python SDK 2.3.0. This is an unmaintained educational reference, not a production or universal harness certification.
+
+- Reference suite: 36 executed cases pass with the optional SDK installed, including absolute CLI launch from a foreign working directory and an actual stdio client/server exchange through the absolute server launcher. Without that SDK, its one optional transport case skips; a skip is not transport verification.
+- Cold start: archive extracted into a temporary directory, commands from the article run with a fresh core environment and no system-site dependencies, followed by the printed optional environment/install/client commands. Init, ingestion, source listing, search, event expansion, context and activity all return usable results.
+- Three negative controls: premature commit, consumed partial tail and an old report misclassified as a new pass each fail their intended regression assertion in separate temporary source copies. Original source is not modified.
+- Independent reconstruction: a fresh builder used the public specification and article core, without reference implementation source. The first attempt exposed missing result envelopes; the public specification was repaired. The builder supplied its own subsequent corrections. Its resulting implementation passes 34 embedded test executions and nine externally specified held-out scenarios. Embedded executions include inherited repeated cases, not 34 distinct guarantees. The coordinator executed the tests and corrected three mechanical syntax/fixture defects; this was source independence, not an OS-enforced blind experiment.
+- Held-out scenarios include a real abrupt subprocess exit before source checkpoint commit, duplicate ingestion, partial UTF-8 tails, prefix rewrite rejection, unavailable source retention, scoped references, interleaved sources, Claude-shaped synthetic calls/results, duplicate call IDs, truncated outputs, a collection-only command and stable search continuation during appends.
+
+The synthetic investigation resolves to a recorded failed direct test, an unresolved pending invocation and an old passing report read. The completion claim is not accepted as proof. The article explains how to retrieve and cite those source references.
+
+Codex CLI 0.167.0: newly generated custom-call/output shapes inspected and preserved in a sanitized fixture. Its JavaScript wrapper is not decoded as a direct test command. Claude Code 2.1.319: attempted fresh live session stopped at account quota before executing a tool. Claude adapter proof is synthetic only. No live Claude command/result compatibility, all historical Codex formats, cross-platform behavior or harness registration is claimed.
+
+The archive manifest records exact file hashes. Run the checks locally after any modification. File hashes identify this snapshot; they do not authenticate authors or eliminate sensitive-data risks.
+
+An additional independent adversarial review found three missed tutorial/contract gaps: pending-byte wording, malformed known Codex payload classification, and a pre-call same-ID result falsely settling a later call. These were repaired with explicit source-order semantics and two regression cases; the earlier test count had not proved them. Forum publication remains under the author's control.

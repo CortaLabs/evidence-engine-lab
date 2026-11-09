@@ -1,0 +1,102 @@
+{
+  "BUILD_CONTRACT.md": {
+    "bytes": 24036,
+    "sha256": "c15804f20fcf509c79c4f56aa0bcf071adc2a4062c673cd0ab4aaee681011622"
+  },
+  "CONNECTIONS.md": {
+    "bytes": 5423,
+    "sha256": "551deb5e55cb211f30092ce6f4effd71326fef982d55497298f1903d53ed986a"
+  },
+  "GUIDE.md": {
+    "bytes": 71292,
+    "sha256": "0353c772faeb447e7d19223a1fa16d67ea351173018e276b7411225ba49da7c9"
+  },
+  "LICENSE": {
+    "bytes": 1066,
+    "sha256": "c035058cbfbbcef12091e706dae79aca4d6836ba114f4ee90a3332e549f97523"
+  },
+  "NOTICE.md": {
+    "bytes": 891,
+    "sha256": "c1b51717b87e345325d5d07d2ff40df3acabd5938c4977ec71be6ed3dfd330b6"
+  },
+  "README.md": {
+    "bytes": 6958,
+    "sha256": "0fbed50164b1972e2290e0772b392df375148a96daaf164a8c45dfb5c65dc3a0"
+  },
+  "VERIFICATION.md": {
+    "bytes": 3439,
+    "sha256": "5e0084f24a72f1d5783df8800ddc6700937030cba87f4edcc3cd553f4e746a42"
+  },
+  "evidence_cli.py": {
+    "bytes": 297,
+    "sha256": "78ea94466b4f6b7a3413240c602ea40b6f4f73ac0a7c2eb52a64f35ec5c29a0c"
+  },
+  "evidence_engine/__init__.py": {
+    "bytes": 270,
+    "sha256": "d8da052175632dd8abc796590d2d125b25957e467bbac7f8a89cdf3f3ab4323f"
+  },
+  "evidence_engine/__main__.py": {
+    "bytes": 3892,
+    "sha256": "9f8a2a7fcaed768b34727ccfc96f24a9e663122734ea777ea543fe63ceeda3f8"
+  },
+  "evidence_engine/adapters.py": {
+    "bytes": 8640,
+    "sha256": "1e2ca0f9e12b5ad0aeef56c4dbeb9472e7a5c142ea365d624316b9be4de8ee22"
+  },
+  "evidence_engine/mcp_server.py": {
+    "bytes": 1633,
+    "sha256": "12db564f5bef58b41565867c1a86066cd2a73fa095359cd04e5599066c5a36fc"
+  },
+  "evidence_engine/reader.py": {
+    "bytes": 11153,
+    "sha256": "5827de0b961e77e9cc90a24d2f274acd2c37547c1a94c830b6be33b0c2b320f0"
+  },
+  "evidence_engine/store.py": {
+    "bytes": 10798,
+    "sha256": "0eb160133f258c6c0cc970739eaa2ba56cafb20f17bbea2d644d6cab55c72e58"
+  },
+  "fixtures/claude.jsonl": {
+    "bytes": 549,
+    "sha256": "45b8615d96846614fa488bdefc53d20f17798bc156dbc4d2851394b17b82ed82"
+  },
+  "fixtures/codex.jsonl": {
+    "bytes": 1153,
+    "sha256": "a1b26eff7224ab9d8976d096da45d5c301a4390965e5afd8a338bfca166bd482"
+  },
+  "fixtures/codex_native.jsonl": {
+    "bytes": 1305,
+    "sha256": "9ece641d2ecd9963b28014407ab9214ef7701ffef78b9ffdd685828b8cd024bf"
+  },
+  "requirements-mcp.txt": {
+    "bytes": 67,
+    "sha256": "f9244cdbee6e6caff6f1a86d212b362fbe07f2faaa623cd24b8715b2d709f332"
+  },
+  "run_negative_controls.py": {
+    "bytes": 2144,
+    "sha256": "8d2f4cc29aa477f3cac6392385efabda6fb8c15a1de756001b91f4706118bdc8"
+  },
+  "serve_mcp.py": {
+    "bytes": 317,
+    "sha256": "8bee44a1fb2819567ac7521efa241b6d31f9e7e85d678b0b9a4637bb6a88ef8e"
+  },
+  "tests/__init__.py": {
+    "bytes": 51,
+    "sha256": "00c3c191a9a015069c6a96b71b56ee78ea7da461c3627e78808bf3a0ddced246"
+  },
+  "tests/test_engine.py": {
+    "bytes": 25315,
+    "sha256": "636858cd9dc3867b18a3dd050b40f13e4736561ff5b357b4914293e186672027"
+  },
+  "tests/test_launchers.py": {
+    "bytes": 2980,
+    "sha256": "5e97ba7ebab443a55fd6fcd890c757607c3ea12e7a1105e8989fe873ae45dc0b"
+  },
+  "tests/test_mcp.py": {
+    "bytes": 330,
+    "sha256": "3ea50af9836683bfad23e537ca69cf0ed4e40eaca4f0ae7492201fe6cd5c4aab"
+  },
+  "verify_mcp.py": {
+    "bytes": 4460,
+    "sha256": "d9afd4c25381f67c6b40b0223099e3a03e03f63d09a48387f40ddc248434c9e2"
+  }
+}
