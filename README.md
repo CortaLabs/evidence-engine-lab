@@ -78,4 +78,4 @@ Raw bytes and normalized text are retained in SQLite. Deleting the original sour
 
 ## License and source
 
-MIT licensed with Austin's approval. See LICENSE and NOTICE.md for scope and dependency provenance. Source repository: https://github.com/CortaLabs/evidence-engine-lab. This software export excludes the accompanying article, private review notes and INVICTUS image assets. The article is still under editorial review; software publication does not approve a forum post.
+MIT licensed with Austin's approval. See LICENSE and NOTICE.md for scope and dependency provenance. Source repository: https://github.com/CortaLabs/evidence-engine-lab. This export includes the article as generated GUIDE.md, with its separate copyright notice; it excludes private review notes and INVICTUS image binaries. Software publication does not approve a forum post.
